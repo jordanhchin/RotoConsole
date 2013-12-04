@@ -30,20 +30,20 @@ public class Main {
 		int totalCats = countCats(catUsed);
 		showCats(catUsed, catOrder);
 		loadStats(catUsed, stats, totalCats, catOrder);
-		scoreStats(catUsed, stats, totalCats, teams);
-		//showTeamInfo(stats, teams, 1);
+		//scoreStats(catUsed, stats, totalCats, teams, catOrder);
+		showTeamInfo(stats, teams, 0);
 		//showTeams(teams);
 		//showCats(catUsed);
 	}
 
-	public static void scoreStats(boolean[] cats, String[][] stat, int catCount, String[] teamNames) {
+	public static void scoreStats(boolean[] cats, String[][] stat, int catCount, String[] teamNames, int[] catOrder) {
 		String[] tempArray = new String[teamCnt];
 		float[] tempRotoScore = new float[teamCnt];
 		float[] rotoScore = new float[teamCnt];
-		int useStat = 1;
+		int useStat = 0;
 		
 		for (int i = 0; i < teamCnt; i++) 
-			tempArray[i] = stat[i][useStat];
+			tempArray[i] = stat[i][catOrder[useStat]];
 		
 		Arrays.sort(tempArray);
 		
@@ -103,11 +103,15 @@ public class Main {
 			}
 			// Check if this stat category is used in this league
 			//while (cats[statIndex] == false) {
-				//stat[currentTeam][statIndex] = null;
-				//statIndex++;
+			//	stat[currentTeam][statIndex] = null;
+			//	statIndex++;
 			//}
 			//System.out.println("position=" + position + " currentTeam=" + currentTeam + " statIndex=" + statIndex + " data.text()=" + data.text());		
-			stat[currentTeam][catOrder[statIndex]] = data.text();
+			for (int i = 0; i < 38; i++)
+				if (position == catOrder[i]) {
+					System.out.println("position=" + position + " catOrder=" + catOrder[i] + " i=" + i + " statIndex=" + statIndex + " data.text()=" + data.text());
+					stat[currentTeam][i] = data.text();
+				}
 			statIndex++;
 			position++;
 		}
@@ -139,8 +143,10 @@ public class Main {
 		Elements query = doc.select("TD[style]");
 		int index = 0;
 		
-		for (int i = 0; i < 38; i++) 
+		for (int i = 0; i < 38; i++) {
 			cats[i] = false;
+			catOrder[i] = 99;
+		}
 		
 		for (Element td : query) {
 			
