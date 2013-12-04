@@ -23,12 +23,15 @@ public class Main {
 		boolean[] catUsed = new boolean[38];
 		String[] teams = new String[teamCnt];
 		String[][] stats = new String[teamCnt][38];
+		int[] catOrder = new int[38];
 		
-		loadCats(catUsed);
+		loadCats(catUsed, catOrder);
 		loadTeams(teams);
 		int totalCats = countCats(catUsed);
-		loadStats(catUsed, stats, totalCats);
+		showCats(catUsed, catOrder);
+		loadStats(catUsed, stats, totalCats, catOrder);
 		scoreStats(catUsed, stats, totalCats, teams);
+		//showTeamInfo(stats, teams, 1);
 		//showTeams(teams);
 		//showCats(catUsed);
 	}
@@ -37,22 +40,20 @@ public class Main {
 		String[] tempArray = new String[teamCnt];
 		float[] tempRotoScore = new float[teamCnt];
 		float[] rotoScore = new float[teamCnt];
+		int useStat = 1;
 		
 		for (int i = 0; i < teamCnt; i++) 
-			tempArray[i] = stat[i][0];
+			tempArray[i] = stat[i][useStat];
 		
 		Arrays.sort(tempArray);
 		
 		for (int i = 0; i < teamCnt; i++) {
 			for (int j = 0; j < teamCnt; j++) {
-				if (tempArray[j].equals(stat[i][0]))
+				if (tempArray[j].equals(stat[i][useStat]))
 					tempRotoScore[i] = 12-j; 
 			}
 		}
 
-		for (int i = 0; i < teamCnt; i++)
-			System.out.println(teamNames[i] + " - " + tempRotoScore[i]);
-		System.out.println("");
 		
 		for (int i = 0; i < teamCnt; i++) {
 			float dupes = 0;
@@ -65,10 +66,10 @@ public class Main {
 		}
 
 		for (int i = 0; i < teamCnt; i++)
-			System.out.println(teamNames[i] + " - " + rotoScore[i]);
+			System.out.println(teamNames[i] + " - " + stat[i][useStat] + " - " + rotoScore[i]);
 	}
 	
-	public static void loadStats(boolean[] cats, String[][] stat, int catCount) throws IOException {
+	public static void loadStats(boolean[] cats, String[][] stat, int catCount, int[] catOrder) throws IOException {
 		Document doc = Jsoup.connect(url).get();
 		Elements query = doc.select("TD[id]");
 		
@@ -101,10 +102,12 @@ public class Main {
 				}
 			}
 			// Check if this stat category is used in this league
-			while (cats[statIndex] == false)
-				statIndex++;
+			//while (cats[statIndex] == false) {
+				//stat[currentTeam][statIndex] = null;
+				//statIndex++;
+			//}
 			//System.out.println("position=" + position + " currentTeam=" + currentTeam + " statIndex=" + statIndex + " data.text()=" + data.text());		
-			stat[currentTeam][statIndex] = data.text();
+			stat[currentTeam][catOrder[statIndex]] = data.text();
 			statIndex++;
 			position++;
 		}
@@ -131,28 +134,24 @@ public class Main {
 		}	
 	}
 	
-	public static void loadCats(boolean[] cats) throws IOException {
+	public static void loadCats(boolean[] cats, int[] catOrder) throws IOException {
 		Document doc = Jsoup.connect(url).get();
 		Elements query = doc.select("TD[style]");
-
+		int index = 0;
+		
 		for (int i = 0; i < 38; i++) 
 			cats[i] = false;
 		
 		for (Element td : query) {
 			
-			//System.out.println(td.text());
-			//boolean found = false;
-			
 			for (int i = 0; i < 38; i++) {
 				if (td.text().equals(catLabels[i])) {
 					cats[i] = true;
+					catOrder[i] = index++;
 					//System.out.println("Found!");
-					//found = true;
 				}
 			}
 				
-			//if (found == false)
-				//System.out.println("Not found.");
 		}
 				
 		
@@ -167,10 +166,18 @@ public class Main {
 		return total;
 	}
 	
-	public static void showCats(boolean[] cats) {
+	public static void showCats(boolean[] cats, int[] catOrder) {
 		for (int i = 0; i < 38; i++) {
-			System.out.println(catLabels[i] + " = " + cats[i]); 
+			System.out.println(i + ": " + catLabels[i] + "[" + catOrder[i] + "] = " + cats[i]); 
 		}
+	}
+	
+	public static void showTeamInfo(String[][] stat, String[] teamNames, int index) {
+		System.out.println(teamNames[index] + "[" + index + "]: ");
+		for (int i = 0; i < 38; i++) {
+			System.out.println(i + ": " + catLabels[i] + " - " + stat[index][i]); 
+		}
+				
 	}
 
 }
