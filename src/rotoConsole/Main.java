@@ -22,54 +22,136 @@ public class Main {
 		
 		boolean[] catUsed = new boolean[38];
 		String[] teams = new String[teamCnt];
-		String[][] stats = new String[teamCnt][38];
-		int[] catOrder = new int[38];
 		
-		loadCats(catUsed, catOrder);
+		int totalCats = loadCats(catUsed);
+		String[][] stats = new String[teamCnt][totalCats];
+		float[][] rotoScores = new float[teamCnt][totalCats];
+		String[] catTable = new String[totalCats];
+		boolean[] invertedCat = new boolean[totalCats];
+		boolean[] useFloat = new boolean[totalCats];
+		loadCatTable(catTable, invertedCat, useFloat);
+		float[] finalScore = new float[teamCnt];
+		int [] finalRank = new int[teamCnt];
+		
 		loadTeams(teams);
-		int totalCats = countCats(catUsed);
-		showCats(catUsed, catOrder);
-		loadStats(catUsed, stats, totalCats, catOrder);
-		//scoreStats(catUsed, stats, totalCats, teams, catOrder);
-		showTeamInfo(stats, teams, 0);
+		//showCats(catUsed);
+		loadStats(catUsed, stats, totalCats);
+		scoreStats(catUsed, stats, totalCats, teams, catTable, invertedCat, useFloat, rotoScores, finalScore, finalRank);
+		showTable(stats, totalCats, teams, catTable, rotoScores, finalScore, finalRank);
+		//showTeamInfo(stats, teams, 0);
 		//showTeams(teams);
 		//showCats(catUsed);
 	}
 
-	public static void scoreStats(boolean[] cats, String[][] stat, int catCount, String[] teamNames, int[] catOrder) {
-		String[] tempArray = new String[teamCnt];
-		float[] tempRotoScore = new float[teamCnt];
-		float[] rotoScore = new float[teamCnt];
-		int useStat = 0;
-		
-		for (int i = 0; i < teamCnt; i++) 
-			tempArray[i] = stat[i][catOrder[useStat]];
-		
-		Arrays.sort(tempArray);
-		
+	public static void showTable(String[][] stat, int catCount, String[] teamNames, String[] catTable, float[][] rotoScores, float[] finalScore, int[] finalRank) {
+		System.out.printf("Team                     ");
+		for (int i = 0; i < catCount; i++)
+			System.out.printf("%-6s ", catTable[i]);
+		System.out.printf("%-6s ", "Score");
+		System.out.printf("%-6s \n", "Rank");
 		for (int i = 0; i < teamCnt; i++) {
-			for (int j = 0; j < teamCnt; j++) {
-				if (tempArray[j].equals(stat[i][useStat]))
-					tempRotoScore[i] = 12-j; 
+			System.out.printf("%-25s", teamNames[i]);
+			for (int j = 0; j < catCount; j++) {
+				//System.out.printf("%-6s ", stat[i][j]);
+				System.out.printf("%-6s ", rotoScores[i][j]);
 			}
+			System.out.printf("%-6s ", finalScore[i]);
+			System.out.printf("%-6s \n", finalRank[i]);
 		}
-
-		
-		for (int i = 0; i < teamCnt; i++) {
-			float dupes = 0;
-			for (int j = 0; j < teamCnt; j++) {
-				if (tempRotoScore[i] == tempRotoScore[j]) {
-					dupes++;
-				}
-			}
-			rotoScore[i] = tempRotoScore[i] + (dupes-1)/2;
-		}
-
-		for (int i = 0; i < teamCnt; i++)
-			System.out.println(teamNames[i] + " - " + stat[i][useStat] + " - " + rotoScore[i]);
 	}
 	
-	public static void loadStats(boolean[] cats, String[][] stat, int catCount, int[] catOrder) throws IOException {
+	public static void scoreStats(boolean[] cats, String[][] stat, int catCount, String[] teamNames, String[] catTable, boolean[] invertedCat, boolean[] useFloat, float[][] rotoScores, float[] finalScore, int[] finalRank) {
+		float[] tempFloatArray = new float[teamCnt];
+		String[] tempStringArray = new String[teamCnt];
+		float[] tempRotoScore = new float[teamCnt];
+		int check = 11;
+		
+		// This FOR loop populates individual roto scores
+		for (int k = 0; k < catCount; k++) {
+		
+			if (useFloat[k]) {
+				for (int i = 0; i < teamCnt; i++)
+					tempFloatArray[i] = Float.valueOf(stat[i][k]);
+					
+				Arrays.sort(tempFloatArray);
+				
+				//if (k == check)
+				//	for (int i = 0; i < teamCnt; i++)
+				//		System.out.println(tempFloatArray[i]);
+			
+				for (int i = 0; i < teamCnt; i++) {
+					for (int j = 0; j < teamCnt; j++) {
+						if (tempFloatArray[j] == Float.valueOf(stat[i][k])) {
+							if (invertedCat[k])
+								tempRotoScore[i] = j+1;
+							else
+								tempRotoScore[i] = 12-j;
+						}
+					}
+				}
+			}
+			else {
+				for (int i = 0; i < teamCnt; i++)
+					tempStringArray[i] = stat[i][k];
+					
+				Arrays.sort(tempStringArray);
+				
+				if (k == check)
+					for (int i = 0; i < teamCnt; i++)
+						System.out.println(tempStringArray[i]);
+			
+				for (int i = 0; i < teamCnt; i++) {
+					for (int j = 0; j < teamCnt; j++) {
+						if (tempStringArray[j].equals((stat[i][k]))) {
+							if (invertedCat[k])
+								tempRotoScore[i] = j+1;
+							else
+								tempRotoScore[i] = 12-j;
+						}
+					}
+				}				
+			}
+			
+			for (int i = 0; i < teamCnt; i++) {
+				float dupes = 0;
+				for (int j = 0; j < teamCnt; j++) {
+					if (tempRotoScore[i] == tempRotoScore[j]) {
+						dupes++;
+					}
+				}
+				rotoScores[i][k] = tempRotoScore[i] + (dupes-1)/2;
+			}
+						
+			//System.out.println(catTable[k]);
+			//for (int i = 0; i < teamCnt; i++)
+				//System.out.println(teamNames[i] + " - " + stat[i][k] + " - " + rotoScores[i][k]);
+			//System.out.println(""); 
+			
+		} // End FOR(k) loop
+		
+		// This FOR loop determines final roto score
+		for (int i = 0; i < teamCnt; i++) {
+			for (int j = 0; j < catCount ; j++) 
+				finalScore[i] = finalScore[i] + rotoScores[i][j];
+			//System.out.println(teamNames[i] + " - " + finalScore[i]);
+		}
+		
+		// Sort for final roto ranking
+		for (int i = 0; i < teamCnt; i++)
+			tempFloatArray[i] = finalScore[i];
+		Arrays.sort(tempFloatArray);
+		for (int i = 0; i < teamCnt; i++) {
+			for (int j = 0; j < teamCnt; j++) {
+				if (tempFloatArray[j] == finalScore[i]) {
+					finalRank[i] = j+1;
+					break;
+				}
+			}
+			//System.out.println(teamNames[i] + " - " + finalRank[i]);
+		}		
+	}
+	
+	public static void loadStats(boolean[] cats, String[][] stat, int catCount) throws IOException {
 		Document doc = Jsoup.connect(url).get();
 		Elements query = doc.select("TD[id]");
 		
@@ -101,17 +183,8 @@ public class Main {
 					continue jsouploop;
 				}
 			}
-			// Check if this stat category is used in this league
-			//while (cats[statIndex] == false) {
-			//	stat[currentTeam][statIndex] = null;
-			//	statIndex++;
-			//}
-			//System.out.println("position=" + position + " currentTeam=" + currentTeam + " statIndex=" + statIndex + " data.text()=" + data.text());		
-			for (int i = 0; i < 38; i++)
-				if (position == catOrder[i]) {
-					System.out.println("position=" + position + " catOrder=" + catOrder[i] + " i=" + i + " statIndex=" + statIndex + " data.text()=" + data.text());
-					stat[currentTeam][i] = data.text();
-				}
+			stat[currentTeam][statIndex] = data.text();
+			//System.out.println("position=" + position + " currentTeam=" + currentTeam + " statIndex=" + statIndex + " data.text()=" + data.text());
 			statIndex++;
 			position++;
 		}
@@ -138,14 +211,13 @@ public class Main {
 		}	
 	}
 	
-	public static void loadCats(boolean[] cats, int[] catOrder) throws IOException {
+	public static int loadCats(boolean[] cats) throws IOException {
 		Document doc = Jsoup.connect(url).get();
 		Elements query = doc.select("TD[style]");
-		int index = 0;
+		int total = 0;
 		
 		for (int i = 0; i < 38; i++) {
 			cats[i] = false;
-			catOrder[i] = 99;
 		}
 		
 		for (Element td : query) {
@@ -153,28 +225,51 @@ public class Main {
 			for (int i = 0; i < 38; i++) {
 				if (td.text().equals(catLabels[i])) {
 					cats[i] = true;
-					catOrder[i] = index++;
+					total++;
 					//System.out.println("Found!");
 				}
 			}
 				
 		}
-				
-		
-	}
-	
-	public static int countCats(boolean[] cats) {
-		int total = 0;
-		for (int i = 0; i < 38; i++) {
-			if (cats[i] == true)
-				total++;
-		}
 		return total;
 	}
+
+	public static void loadCatTable(String[] catTable, boolean[] invertedCat, boolean[] useFloat) throws IOException {
+		Document doc = Jsoup.connect(url).get();
+		Elements query = doc.select("TD[style]");
+		String[] invertedTable = {"FOL","L","GA","EGA","OTL","GAA"};
+		String[] stringTable = {"TOI","ATOI"};
+		int index = 0;
+		
+		for (Element td : query) {
+			
+			for (int i = 0; i < 38; i++) {
+				if (td.text().equals(catLabels[i])) {
+					catTable[index] = td.text();
+					//System.out.println("catTable[" + index + "]=" + catTable[index]);
+					for (int j = 0; j < invertedTable.length; j++) {
+						if (td.text().equals(invertedTable[j]))
+							invertedCat[index] = true;
+						else
+							invertedCat[index] = false;
+					}
+					for (int j = 0; j < stringTable.length; j++) {
+						if (td.text().equals(stringTable[j]))
+							useFloat[index] = false;
+						else
+							useFloat[index] = true;
+					}
+
+					//System.out.println("invertedTable[" + index + "]=" + invertedCat[index]);
+					index++;
+				}
+			}				
+		}
+	}	
 	
-	public static void showCats(boolean[] cats, int[] catOrder) {
+	public static void showCats(boolean[] cats) {
 		for (int i = 0; i < 38; i++) {
-			System.out.println(i + ": " + catLabels[i] + "[" + catOrder[i] + "] = " + cats[i]); 
+			System.out.println(i + ": " + catLabels[i] + cats[i]); 
 		}
 	}
 	
